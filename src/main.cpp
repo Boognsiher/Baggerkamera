@@ -4,9 +4,28 @@
 #include <ESPmDNS.h>
 #include <esp_camera.h>
 #include <esp_http_server.h>
+#include <ESP32Servo.h>
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "camera_pins.h"
+
+// GPIO12 and GPIO15 are ESP32 "strapping" pins that can affect boot
+// behaviour if pulled the wrong way; GPIO13/14 are free on the
+// AI-Thinker board (normally used for the SD card, which this project
+// doesn't use) and not strapping pins, so they're the safe choice for
+// the pan/tilt servos.
+#define SERVO_PAN_PIN  13
+#define SERVO_TILT_PIN 14
+
+// Mechanical limits so the servo can't be driven into the camera mount
+// or its own wiring. Adjust to whatever your pan/tilt bracket allows.
+#define PAN_MIN_DEG   0
+#define PAN_MAX_DEG   180
+#define TILT_MIN_DEG  30
+#define TILT_MAX_DEG  150
+
+static Servo panServo;
+static Servo tiltServo;
 
 #if __has_include("secrets.h")
 #include "secrets.h"
@@ -104,12 +123,25 @@ static const char INDEX_HTML[] PROGMEM = R"HTML(
       <option value="10">XGA (scharf, langsamer)</option>
     </select>
   </div>
+  <div id="bar">
+    <label>Pan <input id="pan" type="range" min="0" max="180" value="90"
+      oninput="setVar('pan', this.value)"></label>
+    <label>Tilt <input id="tilt" type="range" min="30" max="150" value="90"
+      oninput="setVar('tilt', this.value)"></label>
+    <button onclick="center()">Mitte</button>
+  </div>
 </div>
 <script>
 let ledOn = false;
 function toggleLed(){
   ledOn = !ledOn;
   setVar('led', ledOn ? '1' : '0');
+}
+function center(){
+  document.getElementById('pan').value = 90;
+  document.getElementById('tilt').value = 90;
+  setVar('pan', 90);
+  setVar('tilt', 90);
 }
 function setVar(name, value){
   fetch('/control?var=' + name + '&val=' + value);
@@ -199,6 +231,10 @@ static esp_err_t controlHandler(httpd_req_t *req) {
     res = sensor->set_hmirror(sensor, val);
   } else if (!strcmp(var, "led")) {
     digitalWrite(LED_GPIO_NUM, val ? HIGH : LOW);
+  } else if (!strcmp(var, "pan")) {
+    panServo.write(constrain(val, PAN_MIN_DEG, PAN_MAX_DEG));
+  } else if (!strcmp(var, "tilt")) {
+    tiltServo.write(constrain(val, TILT_MIN_DEG, TILT_MAX_DEG));
   } else {
     httpd_resp_send_404(req);
     return ESP_FAIL;
@@ -301,6 +337,24 @@ void setup() {
 
   pinMode(LED_GPIO_NUM, OUTPUT);
   digitalWrite(LED_GPIO_NUM, LOW);
+
+  // The camera driver already claims LEDC timer 0 for its XCLK signal
+  // (see config.ledc_timer above); without this, ESP32Servo would also
+  // grab timer 0 for the first servo and the two would fight over the
+  // same hardware timer, causing a corrupted camera clock or jittering
+  // servos. Restrict the servo library to timers 1-3 instead.
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+
+  // Standard hobby-servo PWM: 50Hz, 500-2400us pulse width covers the
+  // full 0-180 degree range on most SG90-style servos.
+  panServo.setPeriodHertz(50);
+  panServo.attach(SERVO_PAN_PIN, 500, 2400);
+  tiltServo.setPeriodHertz(50);
+  tiltServo.attach(SERVO_TILT_PIN, 500, 2400);
+  panServo.write(90);
+  tiltServo.write(90);
 
   if (!initCamera()) {
     Serial.println("Kamera-Initialisierung fehlgeschlagen. Verkabelung pruefen.");

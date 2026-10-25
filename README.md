@@ -13,6 +13,8 @@ Heim-WLAN.
 - Eigene 5V-Stromversorgung mit mindestens 2A (aus dem RC-Akku über einen
   5V-BEC/Spannungsregler, **nicht** über die 3.3V/5V-Leitung eines
   USB-Adapters – die liefert zu wenig Strom für Kamera + WLAN)
+- 2x Mini-Servo (z. B. SG90) für Pan/Tilt der Kamera, plus eine
+  Pan/Tilt-Halterung dafür
 
 ### Verkabelung zum Flashen
 
@@ -27,6 +29,22 @@ Heim-WLAN.
 1. IO0 mit GND verbinden, Board (neu) starten → Bootloader-Modus
 2. `pio run -t upload` (oder Upload-Button in VS Code/PlatformIO)
 3. IO0-Brücke entfernen, Board neu starten → normaler Betrieb
+
+### Servos anschließen
+
+| Servo | ESP32-CAM Pin |
+|---|---|
+| Pan (links/rechts) | GPIO13 |
+| Tilt (hoch/runter) | GPIO14 |
+| Servo-VCC (beide) | 5V (gleiche externe Versorgung wie das Board – **nicht** aus dem 3.3V-Pin) |
+| Servo-GND (beide) | GND |
+
+GPIO13/14 sind auf dem AI-Thinker-Board frei, solange ihr keine SD-Karte
+nutzt (die läuft über dieselben Pins), und sind keine "Strapping-Pins",
+die den Bootvorgang stören könnten. Zwei Mini-Servos (SG90 o. ä.) ziehen
+kurzzeitig mehrere hundert mA – aus demselben Grund wie bei der Kamera
+unbedingt eine ordentliche externe 5V-Versorgung verwenden, sonst gibt es
+Reboots oder zuckende Servos.
 
 ## Software einrichten
 
@@ -59,13 +77,16 @@ Auf der Seite:
   Ecken/Motorraum)
 - Auflösungs-Auswahl (kleinere Auflösung = weniger Verzögerung, wichtig
   wenn ihr nach dem Bild lenkt/steuert)
+- Zwei Schieberegler für Pan/Tilt der Kamera, plus ein "Mitte"-Button
+  zum Zurücksetzen auf 90°/90°
 
 Direkte Endpunkte, falls ihr das Bild in eine eigene App/Website einbinden
 wollt:
 - `GET /stream` – MJPEG-Stream (multipart/x-mixed-replace)
 - `GET /capture` – einzelnes JPEG-Standbild
 - `GET /control?var=<name>&val=<n>` – Kamera-Einstellungen (`framesize`,
-  `quality`, `vflip`, `hmirror`, `led`)
+  `quality`, `vflip`, `hmirror`, `led`) und Servos (`pan` 0-180,
+  `tilt` 30-150, Grenzen in `src/main.cpp` anpassbar)
 
 ## Einbautipps für den Bagger
 
