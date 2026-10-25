@@ -16,7 +16,37 @@ Heim-WLAN.
 - 2x Mini-Servo (z. B. SG90) für Pan/Tilt der Kamera, plus eine
   Pan/Tilt-Halterung dafür
 
-### Verkabelung zum Flashen
+### Modul und Programmer-Board zusammenstecken
+
+Das ESP32-CAM-Modul hat an der Unterseite zwei Pin-Reihen (je 8 Pins).
+Manche Module haben die Pins schon angelötet, bei anderen müssen erst
+zwei 1x8-Stiftleisten angelötet werden (liegen meist im Kit dabei).
+
+Beim Aufstecken auf ein Programmer-Board (z. B. das ESP32-CAM-MB):
+
+1. Kamera-Linse zeigt vom USB-Anschluss des Programmer-Boards weg (also
+   zum gegenüberliegenden Ende) – dort ist meist eine Aussparung dafür.
+2. Beide Pin-Reihen mittig über die beiden Buchsenreihen setzen, nicht
+   um eine Spalte verschoben.
+3. Gerade von oben nach unten drücken, nicht wackeln/kippen – die Pins
+   verbiegen leicht.
+
+### Flashen
+
+**Mit einem Programmer-Board wie dem ESP32-CAM-MB** (das verbreitetste
+Zubehör, hat einen eigenen USB-Anschluss mit CH340-Chip):
+
+1. ESP32-CAM-Modul wie oben aufstecken
+2. Per Micro-USB-Kabel an den PC anschließen
+3. Falls im Geräte-Manager/unter Linux kein COM-Port/`/dev/ttyUSB*`
+   auftaucht: CH340-Treiber installieren
+4. `pio run -t upload` – kein manuelles IO0-GND-Brücken nötig, das
+   Board erledigt das automatisch über die USB-Signale
+5. Hängt der Upload bei `Connecting.....`: kurz den Reset-Taster auf
+   dem Programmer-Board drücken, sobald der Upload startet (bei manchen
+   Nachbauten funktioniert die Auto-Boot-Schaltung nicht zuverlässig)
+
+**Mit einem einfachen USB-TTL-/FTDI-Adapter** (ohne eigenes Programmer-Board):
 
 | ESP32-CAM | USB-TTL-Adapter |
 |-----------|------------------|
@@ -29,6 +59,11 @@ Heim-WLAN.
 1. IO0 mit GND verbinden, Board (neu) starten → Bootloader-Modus
 2. `pio run -t upload` (oder Upload-Button in VS Code/PlatformIO)
 3. IO0-Brücke entfernen, Board neu starten → normaler Betrieb
+
+Für den **Festeinbau im Bagger** danach das Kameramodul vom
+Programmer-Board trennen und 5V/GND/Servo-Pins direkt verkabeln – das
+Programmer-Board ist nur zum Flashen gedacht und unnötig sperrig für
+den Dauereinbau.
 
 ### Servos anschließen
 
