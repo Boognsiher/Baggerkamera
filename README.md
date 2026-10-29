@@ -132,11 +132,37 @@ wollt:
 - **Stromversorgung:** Ein sauberer 5V-BEC (aus dem Fahrakku) verhindert
   Reboots durch Spannungseinbrüche beim Kamerastart (die Firmware
   deaktiviert zusätzlich den Brownout-Detektor als Absicherung).
-- **Erschütterungen:** Das Modul mit Schaumstoff/Doppelklebeband dämpfen,
-  die Kamera-Flexkabel-Verbindung ist mechanisch empfindlich.
 - **Sichtfeld:** Montage am Baggerausleger nahe der Schaufel gibt die
   beste Sicht zum Graben; ein zusätzlicher Blickwinkel auf die Ketten/den
   Unterwagen hilft beim Rangieren, falls Platz für ein zweites Modul ist.
+
+### Vibrationen / Kamera-Stabilisierung
+
+Der OV2640-Sensor hat keine optische oder elektronische Bildstabilisierung,
+und der ESP32 ist zu schwach, das per Software in Echtzeit nachzurechnen
+(er ist schon mit Kamera, WLAN und HTTP-Server ausgelastet). Bei einem
+vibrierenden Bagger bleibt daher nur mechanische Entkopplung:
+
+- **Nicht starr verschrauben:** Kameramodul über 2-3mm Moosgummi/Schaumstoff
+  oder kleine Silikon-Gummipuffer (wie bei FPV-Drohnenkameras, gibt's
+  günstig im Set) vom Chassis entkoppeln, statt direkt auf Metall zu
+  schrauben – das filtert hochfrequentes Vibrieren schon vor der Linse weg.
+- **Montageort abwägen:** Je näher an der Schaufel (beste Sicht zum
+  Graben), desto mehr Hebelwirkung und damit Vibration – ein Punkt näher
+  am Ausleger-Drehgelenk vibriert spürbar weniger, opfert aber etwas Sicht.
+  Bei Montage nahe der Schaufel entsprechend stärker dämpfen.
+- **Flexkabel sichern:** Die Verbindung zwischen Kameralinse und Platine
+  ist ein Flachbandkabel-Stecker, der sich durch Dauervibration lösen
+  kann – mit einem Tropfen Heißkleber oder Kapton-Tape am Rand als
+  Zugentlastung fixieren (nicht den Stecker-Kontakt selbst verkleben).
+- **Schrauben sichern:** Alle Befestigungsschrauben (Kameragehäuse,
+  Pan/Tilt-Halterung, Servo-Hörner) mit niedrigfester Schraubensicherung
+  (z. B. Loctite 222) sichern – unlackierte Schrauben lösen sich unter
+  Dauervibration erfahrungsgemäß nach wenigen Einsätzen.
+- **Servo-Spiel:** Billige SG90-Klone haben oft Plastikgetriebe mit
+  Spiel, das unter Vibration klappert und das Bild zusätzlich unruhig
+  wirken lässt; Metallgetriebe-Varianten (MG90S) sind kaum teurer und
+  deutlich robuster.
 
 ## Andere ESP32-CAM-Boards
 
